@@ -13,6 +13,7 @@ class Task(models.Model):
     completed = models.CharField(
         max_length=9,
         choices= status,
+        default='doing'
     )
     created_at= models.DateTimeField(auto_now_add=True)
     due_date= models.DateField(null=True, blank=True)
