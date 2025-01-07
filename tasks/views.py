@@ -1,87 +1,88 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
 from django.core.paginator import Paginator
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, View, DeleteView
 from .models import Task
 from .forms import TaskForm
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 
 
-@login_required
-def tasklist(request):
+
+class TaskListView(LoginRequiredMixin, ListView):
+    model = Task
+    template_name = 'tasks/list.html'
+    context_object_name = 'tasks'
     
-    search = request.GET.get('search')
-    filter = request.GET.get('filter')
-    if search:
-        tasks = Task.objects.filter(title__icontains=search, user=request.user)
-    
-    elif filter:
+    def get_queryset(self):
+        user = self.request.user
+        search = self.request.GET.get('search', '')
+        filter_status = self.request.GET.get('filter', '')
 
-        tasks = Task.objects.filter(completed=filter, user=request.user)
-    
-    else:    
-        tasks_list = Task.objects.all().order_by('-created_at').filter(user=request.user)
-        
-        paginator = Paginator(tasks_list, 5)
+       
+        tasks = Task.objects.filter(user=user).order_by('-created_at')
 
-        page = request.GET.get('page')
+        if search:
+            tasks = tasks.filter(title__icontains=search)
 
+        if filter_status:
+            tasks = tasks.filter(completed=filter_status)
+
+        paginator = Paginator(tasks, 5)
+        page = self.request.GET.get('page')
         tasks = paginator.get_page(page)
 
-    return render(request, 'tasks/list.html', {'tasks': tasks})
+        return tasks
 
-@login_required
-def taskView(request, id):
-    task = get_object_or_404(Task, pk=id)
-    return render(request, 'tasks/task.html', {'task': task})
 
-@login_required
-def newTask(request):
-    if request.method == 'POST':
-        form = TaskForm(request.POST)
-        if form.is_valid():
-            task = form.save(commit=False)
+class TaskDetailView(LoginRequiredMixin, DetailView):
+    model = Task
+    template_name = 'tasks/task.html'
+    context_object_name = 'task'
+
+
+class TaskCreateView(LoginRequiredMixin, CreateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/add_task.html'
+    success_url = '/'
+    
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.completed = 'doing'
+        messages.success(self.request, "Tarefa criada!")
+        return super().form_valid(form)
+
+
+class TaskUpdateView(LoginRequiredMixin, UpdateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/edit_task.html'
+    success_url = '/' 
+    
+
+
+class TaskStatusChangeView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        task = get_object_or_404(Task, pk=pk, user=request.user)
+        
+        if task.completed == 'doing':
+            task.completed = 'done'
+        else:
             task.completed = 'doing'
-            task.user = request.user
-            task.save()
-            return redirect('/')
-    else:
-        form = TaskForm()
-        return render(request, 'tasks/addtask.html', {'form': form})
+        task.save()
+        return redirect('task-list')
 
-@login_required    
-def editTask(request, id):
-    task = get_object_or_404(Task, pk=id)
-    form = TaskForm(instance=task)
 
-    if(request.method == 'POST'):
-        form = TaskForm(request.POST, instance=task)
-
-        if(form.is_valid()):
-            task.save()
-            return redirect('/')
-        else: 
-            return render(request, 'tasks/edittask.html', {'form': form, 'task':task})
+class TaskDeleteView(DeleteView):
+    model = Task
+    success_url = reverse_lazy('task-list')
     
-    else:
-        return render(request, 'tasks/edittask.html', {'form': form, 'task':task})
+
+    def post(self, request, *args, **kwargs):
+        messages.success(request, "Tarefa excluída com sucesso!")
+        return super().post(request, *args, **kwargs)
     
-@login_required
-def changeStatus(request, id):
-    task=get_object_or_404(Task, pk=id)
-
-    if(task.completed =='doing'):
-        task.completed = 'done'    
-    else:
-        task.completed = 'doing'
-
-    task.save()
-    return redirect('/')    
-
-@login_required
-def deleteTask(request, id):
-    task = get_object_or_404(Task, pk=id)
-    task.delete()
-
-    messages.info(request, 'Tarefa deletada com sucesso.')
     
-    return redirect('/')
+        
+

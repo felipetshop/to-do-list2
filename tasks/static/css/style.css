@@ -40,13 +40,18 @@
 }
 
 .add-div {
-    background-color: blue;
+    background-color: #007bff;
     cursor: pointer;
     display: inline-block;
     color: white;
     padding: 8px;
     border-radius: 5px;
     margin-right: 25px;
+    transition: all ease 0.5s;
+}
+
+.add-div:hover{
+    background-color: #0056b3
 }
 
 .fas.fa-plus {
@@ -73,15 +78,36 @@
 }
 
 /* filtro */
-.filter-div{
-    margin-bottom: 15px;
-    padding: 0;
+#filter-form {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
 }
 
-#filter{
-    display: inline-block;
-    width: 200px;
-    margin-left: 10px;
+#filter {
+    flex: 0,5;
+}
+
+#filter-form button {
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition:  ease .3s;
+}
+
+#filter-form button:hover {
+    background-color: #0056b3;
+}
+
+.btn.btn-secondary{
+    padding: 5px;
+    font-size: 13px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 /* lista de tarefas */
@@ -93,6 +119,7 @@
 
 .task-list {
     padding-left: 0;
+    margin-top: 10px;
 
 }
 
@@ -101,6 +128,7 @@
     font-size: 20px;
     height: 50px;
     padding: 0 15px;
+    border-radius: 5px;
     padding-top: 10px;
     border-bottom: 1px dashed rgb(121, 121, 121);
     
@@ -159,6 +187,7 @@ footer p {
 
 ul.messages {
     padding: 0;
+    margin-top: 5px;
 }
 
 ul.messages li{
